@@ -145,7 +145,7 @@ namespace video {
       operator[](flag_e flag) {
         return capabilities[(std::size_t) flag];
       }
-    } av1, hevc, h264;
+    } av1, hevc, h264, mpeg;
 
     uint32_t flags;
   };

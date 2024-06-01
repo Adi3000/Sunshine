@@ -484,6 +484,18 @@ namespace video {
       std::nullopt,  // QP rate control fallback
       "h264_nvenc"s,
     },
+    {
+      // Common options
+      {},
+      // SDR-specific options
+      {},
+      // HDR-specific options
+      {},
+      // Fallback options
+      {},
+      std::nullopt,  // QP rate control fallback
+      "mpeg2_nvenc"s, //MAY NOT EXISTS
+    },
     PARALLEL_ENCODING | REF_FRAMES_INVALIDATION  // flags
   };
 #elif !defined(__APPLE__)
@@ -570,6 +582,26 @@ namespace video {
       std::nullopt,  // QP rate control fallback
       "h264_nvenc"s,
     },
+    {
+      {
+        { "delay"s, 0 },
+        { "forced-idr"s, 1 },
+        { "zerolatency"s, 1 },
+        { "preset"s, &config::video.nv_legacy.preset },
+        { "tune"s, NV_ENC_TUNING_INFO_ULTRA_LOW_LATENCY },
+        { "rc"s, NV_ENC_PARAMS_RC_CBR },
+        { "multipass"s, &config::video.nv_legacy.multipass },
+        { "aq"s, &config::video.nv_legacy.aq },
+      },
+      // SDR-specific options
+      {
+        { "profile"s, (int) nv::profile_h264_e::high },
+      },
+      {},  // HDR-specific options
+      {},  // Fallback options
+      std::nullopt,  // QP rate control fallback
+      "mpeg2_nvenc"s, //MAY NOT EXISTS
+    },
     PARALLEL_ENCODING
   };
 #endif
@@ -653,6 +685,28 @@ namespace video {
       std::nullopt,  // QP rate control fallback
       "h264_qsv"s,
     },
+    {
+      // Common options
+      {
+        { "preset"s, &config::video.qsv.qsv_preset },
+        { "forced_idr"s, 1 },
+        { "async_depth"s, 1 },
+        { "low_delay_brc"s, 1 },
+        { "low_power"s, 1 },
+      },
+      // SDR-specific options
+      {
+        { "profile"s, (int) qsv::profile_h264_e::high },
+      },
+      // HDR-specific options
+      {},
+      // Fallback options
+      {
+        { "low_power"s, 0 },  // Some old/low-end Intel GPUs don't support low power encoding
+      },
+      std::nullopt,  // QP rate control fallback
+      "mpeg2_qsv"s, //MAY NOT EXISTS
+    },
     PARALLEL_ENCODING | CBR_WITH_VBR | RELAXED_COMPLIANCE | NO_RC_BUF_LIMIT
   };
 
@@ -727,6 +781,28 @@ namespace video {
       std::nullopt,  // QP rate control fallback
       "h264_amf"s,
     },
+    {
+      // Common options
+      {
+        { "filler_data"s, false },
+        { "log_to_dbg"s, []() { return config::sunshine.min_log_level < 2 ? 1 : 0; } },
+        { "preencode"s, &config::video.amd.amd_preanalysis },
+        { "quality"s, &config::video.amd.amd_quality_av1 },
+        { "rc"s, &config::video.amd.amd_rc_av1 },
+        { "usage"s, &config::video.amd.amd_usage_av1 },
+        { "enforce_hrd"s, &config::video.amd.amd_enforce_hrd },
+      },
+      // SDR-specific options
+      {},
+      // HDR-specific options
+      {},
+      // Fallback options
+      {
+        { "usage"s, 2 /* AMF_VIDEO_ENCODER_USAGE_LOW_LATENCY */ },  // Workaround for https://github.com/GPUOpen-LibrariesAndSDKs/AMF/issues/410
+      },
+      std::nullopt,  // QP rate control fallback
+      "mpeg2_amf"s, //MAY NOT EXISTS
+    },
     PARALLEL_ENCODING
   };
 #endif
@@ -791,6 +867,18 @@ namespace video {
       {},  // Fallback options
       std::nullopt,  // QP rate control fallback
       "libx264"s,
+    },
+    {
+      // Common options
+      {
+        { "preset"s, &config::video.sw.sw_preset },
+        { "tune"s, &config::video.sw.sw_tune },
+      },
+      {},  // SDR-specific options
+      {},  // HDR-specific options
+      {},  // Fallback options
+      std::nullopt,  // QP rate control fallback
+      "mpeg2video"s,
     },
     H264_ONLY | PARALLEL_ENCODING | ALWAYS_REPROBE
   };
@@ -859,6 +947,18 @@ namespace video {
       std::make_optional<encoder_t::option_t>("qp"s, &config::video.qp),
       "h264_vaapi"s,
     },
+    {
+      // Common options
+      {
+        { "preset"s, &config::video.sw.sw_preset },
+        { "tune"s, &config::video.sw.sw_tune },
+      },
+      {},  // SDR-specific options
+      {},  // HDR-specific options
+      {},  // Fallback options
+      std::nullopt,  // QP rate control fallback
+      "mpeg2video"s,
+    },
     LIMITED_GOP_SIZE | PARALLEL_ENCODING | SINGLE_SLICE_ONLY | NO_RC_BUF_LIMIT
   };
 #endif
@@ -884,6 +984,36 @@ namespace video {
       {},  // Fallback options
       std::nullopt,
       "av1_videotoolbox"s,
+    },
+    {
+      // Common options
+      {
+        { "allow_sw"s, &config::video.vt.vt_allow_sw },
+        { "require_sw"s, &config::video.vt.vt_require_sw },
+        { "realtime"s, &config::video.vt.vt_realtime },
+        { "prio_speed"s, 1 },
+      },
+      {},  // SDR-specific options
+      {},  // HDR-specific options
+      {},  // Fallback options
+      std::nullopt,
+      "hevc_videotoolbox"s,
+    },
+    {
+      // Common options
+      {
+        { "allow_sw"s, &config::video.vt.vt_allow_sw },
+        { "require_sw"s, &config::video.vt.vt_require_sw },
+        { "realtime"s, &config::video.vt.vt_realtime },
+        { "prio_speed"s, 1 },
+      },
+      {},  // SDR-specific options
+      {},  // HDR-specific options
+      {
+        { "flags"s, "-low_delay" },
+      },  // Fallback options
+      std::nullopt,
+      "h264_videotoolbox"s,
     },
     {
       // Common options
@@ -1384,6 +1514,7 @@ namespace video {
 
     auto &video_format = config.videoFormat == 0 ? encoder.h264 :
                          config.videoFormat == 1 ? encoder.hevc :
+                         config.videoFormat == 3 ? encoder.mpeg :
                                                    encoder.av1;
     if (!video_format[encoder_t::PASSED] || !disp->is_codec_supported(video_format.name, config)) {
       BOOST_LOG(error) << encoder.name << ": "sv << video_format.name << " mode not supported"sv;
@@ -1420,7 +1551,7 @@ namespace video {
 
       switch (config.videoFormat) {
         case 0:
-          ctx->profile = FF_PROFILE_H264_HIGH;
+          ctx->profile = FF_PROFILE_MPEG2_MAIN;
           break;
 
         case 1:
@@ -1429,13 +1560,12 @@ namespace video {
 
         case 2:
           // AV1 supports both 8 and 10 bit encoding with the same Main profile
-          BOOST_LOG(info) << "Will use AV1 as ffmpeg profile as recommended"sv;
           ctx->profile = FF_PROFILE_AV1_MAIN;
+          break;
         case 3:
           // MPEG2 supports with only 8
-          BOOST_LOG(warning) << "Will use MPEG2 as ffmpeg profile even if AV1 has beee selected"sv;
+          BOOST_LOG(warning) << "Will use MPEG2 as ffmpeg profile even if AV1 has been selected"sv;
           ctx->profile = FF_PROFILE_MPEG2_MAIN;
-          break;
       }
 
       // B-frames delay decoder output, so never use them
@@ -2294,10 +2424,12 @@ namespace video {
 
     auto test_hevc = active_hevc_mode >= 2 || (active_hevc_mode == 0 && !(encoder.flags & H264_ONLY));
     auto test_av1 = active_av1_mode >= 2 || (active_av1_mode == 0 && !(encoder.flags & H264_ONLY));
+    auto test_mpeg = true;
 
     encoder.h264.capabilities.set();
     encoder.hevc.capabilities.set();
     encoder.av1.capabilities.set();
+    encoder.mpeg.capabilities.set();
 
     // First, test encoder viability
     config_t config_max_ref_frames { 1920, 1080, 60, 1000, 1, 1, 1, 0, 0 };
@@ -2343,6 +2475,42 @@ namespace video {
 
     encoder.h264[encoder_t::REF_FRAMES_RESTRICT] = max_ref_frames_h264 >= 0;
     encoder.h264[encoder_t::PASSED] = true;
+
+    if (test_mpeg) {
+      config_max_ref_frames.videoFormat = 1;
+      config_autoselect.videoFormat = 1;
+
+      if (disp->is_codec_supported(encoder.mpeg.name, config_autoselect)) {
+      retry_mpeg:
+        auto max_ref_frames_mpeg = validate_config(disp, encoder, config_max_ref_frames);
+
+        // If H.264 succeeded with max ref frames specified, assume that we can count on
+        // HEVC to also succeed with max ref frames specified if HEVC is supported.
+        auto autoselect_mpeg = validate_config(disp, encoder, config_autoselect);
+
+        if (autoselect_mpeg < 0 && encoder.mpeg.qp && encoder.mpeg[encoder_t::CBR]) {
+          // It's possible the encoder isn't accepting Constant Bit Rate. Turn off CBR and make another attempt
+          encoder.mpeg.capabilities.set();
+          encoder.mpeg[encoder_t::CBR] = false;
+          goto retry_mpeg;
+        }
+
+        for (auto [validate_flag, encoder_flag] : packet_deficiencies) {
+          encoder.mpeg[encoder_flag] = (max_ref_frames_mpeg & validate_flag && autoselect_mpeg & validate_flag);
+        }
+
+        encoder.mpeg[encoder_t::REF_FRAMES_RESTRICT] = 1;
+        encoder.mpeg[encoder_t::PASSED] = max_ref_frames_mpeg >= 0 || autoselect_mpeg >= 0;
+      }
+      else {
+        BOOST_LOG(info) << "Encoder ["sv << encoder.mpeg.name << "] is not supported on this GPU"sv;
+        encoder.mpeg.capabilities.reset();
+      }
+    }
+    else {
+      // Clear all cap bits for HEVC if we didn't probe it
+      encoder.mpeg.capabilities.reset();
+    }
 
     if (test_hevc) {
       config_max_ref_frames.videoFormat = 1;
@@ -2428,10 +2596,12 @@ namespace video {
       auto h264 = config;
       auto hevc = config;
       auto av1 = config;
+      auto mpeg = config;
 
       h264.videoFormat = 0;
       hevc.videoFormat = 1;
       av1.videoFormat = 2;
+      mpeg.videoFormat = 3;
 
       // Reset the display since we're switching from SDR to HDR
       reset_display(disp, encoder.platform_formats->dev_type, config::video.output_name, config);
@@ -2448,6 +2618,9 @@ namespace video {
 
       if (encoder.av1[encoder_t::PASSED]) {
         encoder.av1[flag] = validate_config(disp, encoder, av1) >= 0;
+      }
+      if (encoder.mpeg[encoder_t::PASSED]) {
+        encoder.mpeg[flag] = validate_config(disp, encoder, mpeg) >= 0;
       }
     }
 
@@ -2630,6 +2803,17 @@ namespace video {
       BOOST_LOG(debug) << "-------------------"sv;
 
       BOOST_LOG(info) << "Found HEVC encoder: "sv << encoder.hevc.name << " ["sv << encoder.name << ']';
+    }
+
+    if (encoder.mpeg[encoder_t::PASSED]) {
+      BOOST_LOG(debug) << "------  MPEG ------"sv;
+      for (int x = 0; x < encoder_t::MAX_FLAGS; ++x) {
+        auto flag = (encoder_t::flag_e) x;
+        BOOST_LOG(debug) << encoder_t::from_flag(flag) << (encoder.mpeg[flag] ? ": supported"sv : ": unsupported"sv);
+      }
+      BOOST_LOG(debug) << "-------------------"sv;
+
+      BOOST_LOG(info) << "Found MPEG encoder: "sv << encoder.mpeg.name << " ["sv << encoder.name << ']';
     }
 
     if (encoder.av1[encoder_t::PASSED]) {
