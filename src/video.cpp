@@ -1428,13 +1428,13 @@ namespace video {
           break;
 
         case 2:
+          // MPEG2 supports with only 8
+          BOOST_LOG(warning) << "Will use MPEG2 as ffmpeg profile even if AV1 has been selected"sv;
+          ctx->profile = FF_PROFILE_MPEG2_MAIN;
+        case 3:
           // AV1 supports both 8 and 10 bit encoding with the same Main profile
           BOOST_LOG(info) << "Will use AV1 as ffmpeg profile as recommended"sv;
           ctx->profile = FF_PROFILE_AV1_MAIN;
-        case 3:
-          // MPEG2 supports with only 8
-          BOOST_LOG(warning) << "Will use MPEG2 as ffmpeg profile even if AV1 has beee selected"sv;
-          ctx->profile = FF_PROFILE_MPEG2_MAIN;
           break;
       }
 
